@@ -1,6 +1,4 @@
-package main
-
-import "fmt"
+package week1
 
 // 按照索引删除元素
 func DelSliceByIndex[T any](slice []T, index int) []T {
@@ -26,10 +24,4 @@ func Shrink[T any](slice []T) []T {
 		return newSlice
 	}
 	return slice
-}
-
-func main() {
-	testSlice := []int{1, 2, 3, 4, 5}
-	retSlice := DelSliceByIndex(testSlice, 2)
-	fmt.Println(retSlice)
 }
