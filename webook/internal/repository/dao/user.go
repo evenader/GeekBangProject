@@ -49,6 +49,10 @@ type User struct {
 	Email    string `gorm:"unique"`
 	Password string
 
+	NickName string
+	Birthday int64
+	Profile  string
+
 	// 时区，UTC 0 的毫秒数
 	// 创建时间
 	Ctime int64
@@ -59,6 +63,15 @@ type User struct {
 	//Addr string
 }
 
-//type Address struct {
-//	Uid
-//}
+func (dao *UserDAO) FindById(ctx context.Context, id int64) (User, error) {
+	var u User
+	err := dao.db.WithContext(ctx).Where("id=?", id).First(&u).Error
+	return u, err
+}
+
+func (dao *UserDAO) UpdateById(ctx context.Context, u User) error {
+	now := time.Now().UnixMilli()
+	u.Utime = now
+	err := dao.db.WithContext(ctx).Updates(&u).Error
+	return err
+}

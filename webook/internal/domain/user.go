@@ -7,6 +7,10 @@ type User struct {
 	Email    string
 	Password string
 
+	NickName string
+	Birthday int64
+	Profile  string
+
 	// UTC 0 的时区
 	Ctime time.Time
 

@@ -9,6 +9,7 @@ import (
 var (
 	ErrDuplicateEmail = dao.ErrDuplicateEmail
 	ErrUserNotFound   = dao.ErrRecordNotFound
+	ErrRecordNotFound = dao.ErrRecordNotFound
 )
 
 type UserRepository struct {
@@ -42,4 +43,21 @@ func (repo *UserRepository) toDomain(u dao.User) domain.User {
 		Email:    u.Email,
 		Password: u.Password,
 	}
+}
+
+func (repo *UserRepository) FindById(ctx context.Context, id int64) (domain.User, error) {
+	u, err := repo.dao.FindById(ctx, id)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return repo.toDomain(u), nil
+}
+
+func (repo *UserRepository) UpdateById(ctx context.Context, u domain.User) error {
+	return repo.dao.UpdateById(ctx, dao.User{
+		Id:       u.Id,
+		NickName: u.NickName,
+		Birthday: u.Birthday,
+		Profile:  u.Profile,
+	})
 }

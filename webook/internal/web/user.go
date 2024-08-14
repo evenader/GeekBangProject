@@ -1,12 +1,15 @@
 package web
 
 import (
+	"encoding/json"
 	"gitee.com/geekbang/basic-go/webook/internal/domain"
 	"gitee.com/geekbang/basic-go/webook/internal/service"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 const (
@@ -127,10 +130,78 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 	}
 }
 
-func (h *UserHandler) Edit(ctx *gin.Context) {
+const nickNameMaxLength = 10
+const profileMaxLength = 140
 
+// 第二次作业
+func (h *UserHandler) Edit(ctx *gin.Context) {
+	type UserInfoEditReq struct {
+		Id       int64  `json:"int64"`
+		NickName string `json:"nickname"`
+		Birthday string `json:"birthday"`
+		Profile  string `json:"profile"`
+	}
+
+	var req UserInfoEditReq
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+
+	if len(req.NickName) > nickNameMaxLength {
+		ctx.String(http.StatusOK, "昵称长度超过%d，请重新输入", nickNameMaxLength)
+		return
+	}
+
+	t, err := time.Parse("2006-01-02", req.Birthday)
+	if err != nil {
+		ctx.String(http.StatusOK, "生日格式错误，请重新输入")
+		return
+	}
+
+	if len(req.NickName) > profileMaxLength {
+		ctx.String(http.StatusOK, "简介长度超过%d，请重新输入！", profileMaxLength)
+		return
+	}
+
+	u := &domain.User{
+		NickName: req.NickName,
+		Birthday: t.Unix(),
+		Profile:  req.Profile,
+		Id:       req.Id,
+	}
+
+	err = h.svc.Edit(ctx, u)
+	switch err {
+	case nil:
+		ctx.String(http.StatusOK, "编辑成功")
+	case service.ErrInvalidId:
+		ctx.String(http.StatusOK, "id错误")
+	default:
+		ctx.String(http.StatusOK, "系统错误")
+	}
 }
 
 func (h *UserHandler) Profile(ctx *gin.Context) {
-	ctx.String(http.StatusOK, "这是 profile")
+	originId := ctx.Query("id")
+
+	id, err := strconv.Atoi(originId)
+	if err != nil {
+		ctx.String(http.StatusOK, "id格式错误")
+		return
+	}
+
+	u, err := h.svc.Profile(ctx, int64(id))
+	switch err {
+	case nil:
+		jsonBytes, err := json.Marshal(u)
+		if err != nil {
+			ctx.String(http.StatusOK, "json序列化失败")
+		}
+		jsonString := string(jsonBytes)
+		ctx.String(http.StatusOK, jsonString)
+	case service.ErrInvalidId:
+		ctx.String(http.StatusOK, "id错误")
+	default:
+		ctx.String(http.StatusOK, "系统错误")
+	}
 }
